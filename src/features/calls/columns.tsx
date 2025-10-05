@@ -3,11 +3,10 @@ import {IconIncoming, IconIncomingFail, IconOutgoing, IconOutgoingFail, IconUser
 import {Avatar, AvatarFallback, AvatarImage} from "@/components/ui/avatar.tsx";
 import {Badge} from "@/components/ui/badge.tsx";
 import {getRatingVariant} from "@/shared/lib/get-rating-variant.ts";
-import {formatDuration} from "@/shared/lib/format-duration.ts";
+import {DurationCell} from "@/components/ui/duration-cell.tsx";
 import {ChevronDown} from "lucide-react"
 import {Button} from "@/components/ui/button.tsx";
-import type {Call} from "@/entities/call/model/types"
-
+import type {Call} from "@/entities/call/model/types.ts"
 
 export const columns: ColumnDef<Call>[] = [
   {
@@ -115,7 +114,6 @@ export const columns: ColumnDef<Call>[] = [
     accessorKey: "duration",
     header: ({column}) => {
       const sorted = column.getIsSorted() as false | "asc" | "desc"
-
       return (
         <Button
           className="px-0"
@@ -135,6 +133,6 @@ export const columns: ColumnDef<Call>[] = [
       )
     },
     sortingFn: (a, b) => a.original.duration - b.original.duration,
-    cell: ({row}) => <p className={'text-end'}>{formatDuration(row.original.duration)}</p>,
-  },
+    cell: ({row}) => <DurationCell call={row.original}/>,   // ← было formatDuration(...)
+  }
 ]

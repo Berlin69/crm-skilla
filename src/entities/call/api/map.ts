@@ -27,7 +27,9 @@ export const mapToCall = (x: SkillaCall): Call => {
       company: x.contact_company || undefined,
     },
     source: x.line_name || x.source || "",
-    rating: seededRating(String(x.id)),  // стабильный «рандом»
+    rating: seededRating(String(x.id)),
     duration: x.time ?? 0,
+    recordId: x.record ?? null,
+    partnershipId: x.partnership_id,
   }
 }

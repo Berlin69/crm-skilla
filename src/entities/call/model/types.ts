@@ -8,5 +8,7 @@ export type Call = {
   call: { isContact: boolean; phone: string; name?: string; company?: string }
   source: string
   rating: Rating
-  duration: number // сек
+  duration: number
+  recordId: string | null
+  partnershipId: string
 }
