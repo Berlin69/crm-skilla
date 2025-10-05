@@ -69,7 +69,8 @@ export function DataTable<TData, TValue>({
                 className={'cursor-pointer'}
               >
                 {row.getVisibleCells().map((cell) => (
-                  <TableCell key={cell.id} className={'hover:bg-[#f8fafd]'}>
+                  <TableCell key={cell.id}
+                             className={'hover:bg-[#f8fafd] last-child:flex last-child:justify-end last-child:w-fit'}>
                     {flexRender(cell.column.columnDef.cell, cell.getContext())}
                   </TableCell>
                 ))}
@@ -78,7 +79,7 @@ export function DataTable<TData, TValue>({
           ) : (
             <TableRow>
               <TableCell colSpan={columns.length} className="h-24 text-center">
-                No results.
+                Нет результатов.
               </TableCell>
             </TableRow>
           )}

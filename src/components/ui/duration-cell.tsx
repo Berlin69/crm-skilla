@@ -6,6 +6,7 @@ import {useCallRecord} from "@/entities/call/hooks/use-call-record.tsx";
 import {IconDownload} from "@/components/icons/icon-download.tsx";
 import {Button} from "@/components/ui/button.tsx";
 import {cn} from "@/lib/utils.ts";
+import * as React from "react";
 
 type Props = { call: Call }
 
@@ -13,12 +14,19 @@ export function DurationCell({call}: Props) {
   const [open, setOpen] = useState(false)
   const [blobUrl, setBlobUrl] = useState<string | null>(null)
   const audioRef = useRef<HTMLAudioElement | null>(null)
-  const [progress, setProgress] = useState(0)   // 0..1
+  const [progress, setProgress] = useState(0)
   const [playing, setPlaying] = useState(false)
 
-  // NEW: refs/state для кастомного трека
   const trackRef = useRef<HTMLDivElement | null>(null)
   const [dragging, setDragging] = useState(false)
+
+  const [showTip, setShowTip] = useState(false)
+  const [hoverP, setHoverP] = useState(0)
+
+  const durationSec =
+    (audioRef.current && isFinite(audioRef.current.duration) && audioRef.current.duration > 0)
+      ? Math.floor(audioRef.current.duration)
+      : call.duration
 
   const {blob, isFetching, refetch} = useCallRecord({
     recordId: call.recordId ?? undefined,
@@ -61,42 +69,50 @@ export function DurationCell({call}: Props) {
     setProgress(a.currentTime / a.duration)
   }
 
-  // === NEW: вычисление процента по позиции курсора и установка currentTime ===
-  const updateFromClientX = (clientX: number) => {
-    const a = audioRef.current
-    const track = trackRef.current
-    if (!a || !track || !isFinite(a.duration) || a.duration <= 0) return
-    const rect = track.getBoundingClientRect()
-    const p = Math.min(1, Math.max(0, (clientX - rect.left) / rect.width))
-    a.currentTime = p * a.duration
-    setProgress(p)
-  }
-
   const onTrackPointerDown = (e: React.PointerEvent<HTMLDivElement>) => {
     if (!blobUrl || isFetching) return
-      ;
-    (e.currentTarget as HTMLDivElement).setPointerCapture(e.pointerId)
+    e.currentTarget.setPointerCapture(e.pointerId)
     setDragging(true)
+    updateHoverFromClientX(e.clientX)
     updateFromClientX(e.clientX)
+    setShowTip(true)
   }
 
   const onTrackPointerMove = (e: React.PointerEvent<HTMLDivElement>) => {
-    if (!dragging) return
-    updateFromClientX(e.clientX)
+    if (!blobUrl || isFetching) return
+    if (dragging) {
+      updateHoverFromClientX(e.clientX)
+      updateFromClientX(e.clientX)
+    } else {
+      updateHoverFromClientX(e.clientX)
+    }
   }
 
   const onTrackPointerUp = (e: React.PointerEvent<HTMLDivElement>) => {
     setDragging(false)
     try {
-      (e.currentTarget as HTMLDivElement).releasePointerCapture(e.pointerId)
+      e.currentTarget.releasePointerCapture(e.pointerId)
     } catch {
+      console.error(e)
     }
   }
 
+  const onTrackPointerEnter = (e: React.PointerEvent<HTMLDivElement>) => {
+    if (!blobUrl || isFetching) return
+    setShowTip(true)
+    updateHoverFromClientX(e.clientX)
+  }
+
+  const onTrackPointerLeave = () => {
+    setDragging(false)
+    setShowTip(false)
+  }
+
+  // Управление и перемотка
   const onTrackKeyDown = (e: React.KeyboardEvent<HTMLDivElement>) => {
     const a = audioRef.current
     if (!a || !isFinite(a.duration) || a.duration <= 0) return
-    const step = 5 // сек
+    const step = 5
     if (e.key === "ArrowRight") {
       a.currentTime = Math.min(a.duration, a.currentTime + step)
       setProgress(a.currentTime / a.duration)
@@ -115,7 +131,26 @@ export function DurationCell({call}: Props) {
       e.preventDefault()
     }
   }
-  // ==========================================================================
+
+  const pctFromClientX = (clientX: number) => {
+    const track = trackRef.current
+    if (!track) return 0
+    const rect = track.getBoundingClientRect()
+    return Math.min(1, Math.max(0, (clientX - rect.left) / rect.width))
+  }
+
+  const updateFromClientX = (clientX: number) => {
+    const a = audioRef.current
+    if (!a || !isFinite(a.duration) || a.duration <= 0) return
+    const p = pctFromClientX(clientX)
+    a.currentTime = p * a.duration
+    setProgress(p)
+  }
+
+  const updateHoverFromClientX = (clientX: number) => {
+    setHoverP(pctFromClientX(clientX))
+  }
+
 
   if (!open) {
     return (
@@ -166,8 +201,10 @@ export function DurationCell({call}: Props) {
             onPointerDown={onTrackPointerDown}
             onPointerMove={onTrackPointerMove}
             onPointerUp={onTrackPointerUp}
+            onPointerEnter={onTrackPointerEnter}
+            onPointerLeave={onTrackPointerLeave}
             className={cn(
-              "relative h-1.5 w-[164px] cursor-pointer rounded-full",
+              "relative h-1.5 w-[220px] cursor-pointer rounded-full",
               "bg-[#dfe7ff] transition-opacity",
               (!blobUrl || isFetching) && "opacity-50 pointer-events-none",
             )}
@@ -176,8 +213,17 @@ export function DurationCell({call}: Props) {
               className="absolute left-0 top-0 h-full rounded-full bg-[#5972ff]"
               style={{width: `${progress * 100}%`}}
             />
+
+            {showTip && (
+              <div
+                className="pointer-events-none absolute -top-5 translate-x-[-50%]
+                 rounded-md px-1.5 py-0.5 text-sm leading-4"
+                style={{left: `${hoverP * 100}%`}}
+              >
+                {formatDuration(Math.round(hoverP * durationSec))}
+              </div>
+            )}
           </div>
-          {/* ================================================================== */}
 
           {blobUrl ? (
             <a
