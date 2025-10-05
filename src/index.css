@@ -3,8 +3,18 @@
 
 @custom-variant dark (&:is(.dark *));
 
+@font-face {
+    font-family: "SF Pro Display";
+    font-style: normal;
+    font-weight: 400;
+    font-display: swap;
+    src: url("../public/fonts/sf-pro-display/SFProDisplay-Regular.woff2") format("woff2"),
+    url("../public/fonts/sf-pro-display/SFProDisplay-Regular.woff") format("woff"),
+    url("../public/fonts/sf-pro-display/SFProDisplay-Regular.ttf") format("truetype");
+}
+
 :root {
-    font-family: system-ui, Avenir, Helvetica, Arial, sans-serif;
+    font-family: "SF Pro Display", system-ui, Avenir, Helvetica, Arial, sans-serif;
     line-height: 1.5;
     font-weight: 400;
 
@@ -66,9 +76,13 @@
 }
 
 @theme inline {
+    --font-sf: 'SF Pro Display';
+    --color-plt-primary: #122945;
+    --color-plt-secondary: #5E7793;
     --color-plt-accent: #002CFB;
     --color-plt-background: #F1F4F9;
     --color-plt-accent-foreground: #DEE4FF;
+    --color-plt-accent-transparent: #ADBFDF;
     --radius-sm: calc(var(--radius) - 4px);
     --radius-md: calc(var(--radius) - 2px);
     --radius-lg: var(--radius);

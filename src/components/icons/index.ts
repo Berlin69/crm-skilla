@@ -1,0 +1,5 @@
+export * from './icon-incoming.tsx'
+export * from './icon-incoming-fail.tsx'
+export * from './icon-outgoing.tsx'
+export * from './icon-outgoing-fail.tsx'
+export * from './icon-user-fallback.tsx'
